@@ -9,7 +9,6 @@ const connectDB = async () => {
     if (!mongoUri) {
       throw new Error("MONGODB_URI is not set. Please configure your database connection string.");
     }
-    console.log("Mongo URI configured:", mongoUri.replace(/:\/\/.*@/, '://***@'));
     const conn = await mongoose.connect(mongoUri);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
