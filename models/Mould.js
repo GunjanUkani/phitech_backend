@@ -20,9 +20,11 @@ const mouldSchema = new mongoose.Schema({
     default: 'Pending',
     required: true
   },
-  quantity: {
+  percentage: {
     type: Number,
-    required: true
+    min: 0,
+    max: 100,
+    required: false
   },
   startDate: {
     type: Date,

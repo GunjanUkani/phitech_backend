@@ -3,7 +3,7 @@ const User = require('../models/User');
 
 // Create Mould - Admin Only
 const createMould = async (req, res) => {
-  const { clientId, productId, status, quantity, startDate, expectedCompletion } = req.body;
+  const { clientId, productId, status, percentage, startDate, expectedCompletion } = req.body;
 
   try {
     const user = await User.findOne({ clientId, isAdmin: false });
@@ -16,7 +16,7 @@ const createMould = async (req, res) => {
       clientId, 
       productId, 
       status: status || 'Pending',
-      quantity,
+      percentage,
       startDate,
       expectedCompletion
     });
@@ -56,7 +56,9 @@ const updateMould = async (req, res) => {
     }
 
     mould.status = req.body.status || mould.status;
-    mould.quantity = req.body.quantity || mould.quantity;
+    if (req.body.percentage !== undefined) {
+      mould.percentage = req.body.percentage;
+    }
     mould.startDate = req.body.startDate || mould.startDate;
     mould.expectedCompletion = req.body.expectedCompletion || mould.expectedCompletion;
     if (req.body.status === 'Completed') {

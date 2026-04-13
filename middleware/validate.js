@@ -4,7 +4,7 @@ const mouldValidation = (req, res, next) => {
   const schema = Joi.object({
     clientId: Joi.string().required(),
     productId: Joi.string().required(),
-    quantity: Joi.number().min(1).required(),
+    percentage: Joi.number().min(0).max(100).required(),
     startDate: Joi.date().required(),
     expectedCompletion: Joi.date().required(),
     status: Joi.string().valid('Pending', 'In Machine', 'Completed').optional()

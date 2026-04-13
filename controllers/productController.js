@@ -14,7 +14,7 @@ const getProducts = async (req, res) => {
 
 // Create a product (Admin only)
 const createProduct = async (req, res) => {
-  const { name, description, price } = req.body;
+  const { name, description } = req.body;
   const isPublic = req.body.isPublic === 'true' || req.body.isPublic === true;
   const shouldUseBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL);
   
@@ -70,7 +70,6 @@ const createProduct = async (req, res) => {
     const product = await Product.create({
       name,
       description,
-      price,
       photos: photoUrls,
       isPublic
     });
