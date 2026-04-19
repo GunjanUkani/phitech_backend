@@ -56,6 +56,8 @@ const updateMould = async (req, res) => {
     }
 
     mould.status = req.body.status || mould.status;
+    mould.productId = req.body.productId || mould.productId;
+    mould.clientId = req.body.clientId || mould.clientId;
     if (req.body.percentage !== undefined) {
       mould.percentage = req.body.percentage;
     }
