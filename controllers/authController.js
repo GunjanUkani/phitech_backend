@@ -85,6 +85,12 @@ const adminLogin = async (req, res) => {
     const user = await User.findOne({ email, isAdmin: true });
 
     if (user && (await user.matchPassword(password))) {
+      // Ensure JWT_SECRET exists
+      if (!process.env.JWT_SECRET) {
+        console.error("JWT_SECRET is missing in environment variables");
+        return res.status(500).json({ message: "Server configuration error: JWT_SECRET missing" });
+      }
+
       res.json({
         _id: user._id,
         email: user.email,
@@ -95,7 +101,11 @@ const adminLogin = async (req, res) => {
       res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Admin Login Error:", error);
+    res.status(500).json({ 
+      message: "Internal server error during login",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 

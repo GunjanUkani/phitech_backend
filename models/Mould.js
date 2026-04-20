@@ -41,4 +41,4 @@ const mouldSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('Mould', mouldSchema);
+module.exports = mongoose.models.Mould || mongoose.model('Mould', mouldSchema);
