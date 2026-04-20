@@ -83,6 +83,7 @@ const adminLogin = async (req, res) => {
 
   try {
     const user = await User.findOne({ email, isAdmin: true });
+    console.log("Admin user found:", !!user);
 
     if (user && (await user.matchPassword(password))) {
       // Ensure JWT_SECRET exists
@@ -104,7 +105,8 @@ const adminLogin = async (req, res) => {
     console.error("Admin Login Error:", error);
     res.status(500).json({ 
       message: "Internal server error during login",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
