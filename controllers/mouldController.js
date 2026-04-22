@@ -11,12 +11,19 @@ const createMould = async (req, res) => {
       return res.status(400).json({ message: `Client with clientId ${clientId} not found` });
     }
 
+    let finalPercentage = percentage;
+    if (status === 'Completed') {
+      finalPercentage = 100;
+    } else if (status === 'Pending' && percentage > 0) {
+      finalPercentage = 0; // Or return error. For simplicity, we'll force 0 if pending.
+    }
+
     const mould = await Mould.create({
       user: user._id, 
       clientId, 
       productId, 
       status: status || 'Pending',
-      percentage,
+      percentage: finalPercentage,
       startDate,
       expectedCompletion
     });
@@ -58,14 +65,21 @@ const updateMould = async (req, res) => {
     mould.status = req.body.status || mould.status;
     mould.productId = req.body.productId || mould.productId;
     mould.clientId = req.body.clientId || mould.clientId;
-    if (req.body.percentage !== undefined) {
-      mould.percentage = req.body.percentage;
+
+    if (mould.status === 'Completed') {
+      mould.percentage = 100;
+      mould.completedDate = new Date();
+    } else if (req.body.percentage !== undefined) {
+      if (mould.status === 'Pending') {
+        // If it's pending, we don't allow percentage updates
+        mould.percentage = 0;
+      } else {
+        mould.percentage = req.body.percentage;
+      }
     }
+
     mould.startDate = req.body.startDate || mould.startDate;
     mould.expectedCompletion = req.body.expectedCompletion || mould.expectedCompletion;
-    if (req.body.status === 'Completed') {
-      mould.completedDate = new Date();
-    }
 
     const updatedMould = await mould.save();
     res.json(updatedMould);
