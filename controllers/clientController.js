@@ -21,9 +21,13 @@ const createClient = async (req, res) => {
     let image = '';
 
     if (req.file) {
-      if (process.env.BLOB_READ_WRITE_TOKEN) {
+      if (process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL) {
         const { put } = require('@vercel/blob');
-        const blob = await put(req.file.originalname, req.file.buffer, { access: 'public' });
+        const blob = await put(`clients/${req.file.originalname}`, req.file.buffer, { 
+          access: 'public',
+          addRandomSuffix: true,
+          token: process.env.BLOB_READ_WRITE_TOKEN
+        });
         image = blob.url;
       } else {
         image = `/uploads/${req.file.filename}`;
@@ -53,9 +57,13 @@ const updateClient = async (req, res) => {
       client.link = link !== undefined ? link : client.link;
 
       if (req.file) {
-        if (process.env.BLOB_READ_WRITE_TOKEN) {
+        if (process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL) {
           const { put } = require('@vercel/blob');
-          const blob = await put(req.file.originalname, req.file.buffer, { access: 'public' });
+          const blob = await put(`clients/${req.file.originalname}`, req.file.buffer, { 
+            access: 'public',
+            addRandomSuffix: true,
+            token: process.env.BLOB_READ_WRITE_TOKEN
+          });
           client.image = blob.url;
         } else {
           client.image = `/uploads/${req.file.filename}`;

@@ -21,9 +21,13 @@ const createCategory = async (req, res) => {
     
     let image = '';
     if (req.file) {
-      if (process.env.BLOB_READ_WRITE_TOKEN) {
+      if (process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL) {
         const { put } = require('@vercel/blob');
-        const blob = await put(req.file.originalname, req.file.buffer, { access: 'public' });
+        const blob = await put(`categories/${req.file.originalname}`, req.file.buffer, { 
+          access: 'public',
+          addRandomSuffix: true,
+          token: process.env.BLOB_READ_WRITE_TOKEN
+        });
         image = blob.url;
       } else {
         image = `/uploads/${req.file.filename}`;
@@ -50,9 +54,13 @@ const updateCategory = async (req, res) => {
       category.description = description || category.description;
       
       if (req.file) {
-        if (process.env.BLOB_READ_WRITE_TOKEN) {
+        if (process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL) {
           const { put } = require('@vercel/blob');
-          const blob = await put(req.file.originalname, req.file.buffer, { access: 'public' });
+          const blob = await put(`categories/${req.file.originalname}`, req.file.buffer, { 
+            access: 'public',
+            addRandomSuffix: true,
+            token: process.env.BLOB_READ_WRITE_TOKEN
+          });
           category.image = blob.url;
         } else {
           category.image = `/uploads/${req.file.filename}`;
