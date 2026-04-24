@@ -7,6 +7,12 @@ const userSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
+  clientName: {
+    type: String
+  },
+  city: {
+    type: String
+  },
   mobile: {
     type: String
   },

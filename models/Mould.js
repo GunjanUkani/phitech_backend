@@ -26,6 +26,9 @@ const mouldSchema = new mongoose.Schema({
     max: 100,
     required: false
   },
+  image: {
+    type: String
+  },
   startDate: {
     type: Date,
     required: true

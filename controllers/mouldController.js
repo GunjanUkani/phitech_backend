@@ -1,9 +1,12 @@
 const Mould = require('../models/Mould');
 const User = require('../models/User');
+const path = require('path');
+const { put } = require('@vercel/blob');
 
 // Create Mould - Admin Only
 const createMould = async (req, res) => {
   const { clientId, productId, status, percentage, startDate, expectedCompletion } = req.body;
+  const shouldUseBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL);
 
   try {
     const user = await User.findOne({ clientId, isAdmin: false });
@@ -11,11 +14,29 @@ const createMould = async (req, res) => {
       return res.status(400).json({ message: `Client with clientId ${clientId} not found` });
     }
 
+    let imageUrl = '';
+    if (req.file) {
+      if (shouldUseBlob) {
+        const original = req.file.originalname || 'mould';
+        const ext = path.extname(original);
+        const base = path.basename(original, ext).replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 60);
+        const blob = await put(`moulds/${base}${ext}`, req.file.buffer, {
+          access: 'public',
+          addRandomSuffix: true,
+          contentType: req.file.mimetype,
+          token: process.env.BLOB_READ_WRITE_TOKEN
+        });
+        imageUrl = blob.url;
+      } else {
+        imageUrl = `/uploads/${req.file.filename}`;
+      }
+    }
+
     let finalPercentage = percentage;
     if (status === 'Completed') {
       finalPercentage = 100;
     } else if (status === 'Pending' && percentage > 0) {
-      finalPercentage = 0; // Or return error. For simplicity, we'll force 0 if pending.
+      finalPercentage = 0; 
     }
 
     const mould = await Mould.create({
@@ -25,7 +46,8 @@ const createMould = async (req, res) => {
       status: status || 'Pending',
       percentage: finalPercentage,
       startDate,
-      expectedCompletion
+      expectedCompletion,
+      image: imageUrl
     });
 
     res.status(201).json(mould);
@@ -37,7 +59,7 @@ const createMould = async (req, res) => {
 // Admin: Get All Moulds
 const getAllMoulds = async (req, res) => {
   try {
-    const moulds = await Mould.find({}).populate('user', 'clientId mobile').sort({ createdAt: -1 });
+    const moulds = await Mould.find({}).populate('user', 'clientId mobile clientName city').sort({ createdAt: -1 });
     res.json(moulds);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -56,10 +78,28 @@ const getMyMoulds = async (req, res) => {
 
 // Update Mould - Admin Only
 const updateMould = async (req, res) => {
+  const shouldUseBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL);
   try {
     const mould = await Mould.findById(req.params.id);
     if (!mould) {
       return res.status(404).json({ message: 'Mould not found' });
+    }
+
+    if (req.file) {
+      if (shouldUseBlob) {
+        const original = req.file.originalname || 'mould';
+        const ext = path.extname(original);
+        const base = path.basename(original, ext).replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 60);
+        const blob = await put(`moulds/${base}${ext}`, req.file.buffer, {
+          access: 'public',
+          addRandomSuffix: true,
+          contentType: req.file.mimetype,
+          token: process.env.BLOB_READ_WRITE_TOKEN
+        });
+        mould.image = blob.url;
+      } else {
+        mould.image = `/uploads/${req.file.filename}`;
+      }
     }
 
     mould.status = req.body.status || mould.status;
@@ -71,7 +111,6 @@ const updateMould = async (req, res) => {
       mould.completedDate = new Date();
     } else if (req.body.percentage !== undefined) {
       if (mould.status === 'Pending') {
-        // If it's pending, we don't allow percentage updates
         mould.percentage = 0;
       } else {
         mould.percentage = req.body.percentage;

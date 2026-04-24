@@ -12,10 +12,10 @@ const getClients = async (req, res) => {
 
 // Create client (Admin only)
 const createClient = async (req, res) => {
-  const { clientId, mobile } = req.body;
+  const { clientId, mobile, clientName, city } = req.body;
 
-  if (!clientId || !mobile) {
-    return res.status(400).json({ message: 'Please provide clientId and mobile' });
+  if (!clientId) {
+    return res.status(400).json({ message: 'Please provide clientId' });
   }
 
   try {
@@ -28,7 +28,9 @@ const createClient = async (req, res) => {
     const user = await User.create({
       clientId,
       mobile,
-      password: mobile,
+      clientName,
+      city,
+      password: clientId, // Password is now clientId by default
       isAdmin: false
     });
 
@@ -36,7 +38,9 @@ const createClient = async (req, res) => {
       res.status(201).json({
         _id: user._id,
         clientId: user.clientId,
-        mobile: user.mobile
+        mobile: user.mobile,
+        clientName: user.clientName,
+        city: user.city
       });
     } else {
       res.status(400).json({ message: 'Invalid client data' });
@@ -68,15 +72,20 @@ const updateClient = async (req, res) => {
     if (user) {
       user.clientId = req.body.clientId || user.clientId;
       user.mobile = req.body.mobile || user.mobile;
-      if (req.body.mobile) {
-          user.password = req.body.mobile; // Reset password to new mobile
+      user.clientName = req.body.clientName || user.clientName;
+      user.city = req.body.city || user.city;
+      
+      if (req.body.clientId) {
+          user.password = req.body.clientId; // Reset password to new clientId
       }
 
       const updatedUser = await user.save();
       res.json({
         _id: updatedUser._id,
         clientId: updatedUser.clientId,
-        mobile: updatedUser.mobile
+        mobile: updatedUser.mobile,
+        clientName: updatedUser.clientName,
+        city: updatedUser.city
       });
     } else {
       res.status(404).json({ message: 'Client not found' });

@@ -9,9 +9,9 @@ const generateToken = (id) => {
 
 // Register User
 const registerUser = async (req, res) => {
-  const { clientId, mobile, isAdmin } = req.body;
+  const { clientId, mobile, isAdmin, clientName, city } = req.body;
 
-  if (!clientId || !mobile) {
+  if (!clientId || (!mobile && !isAdmin)) {
     return res.status(400).json({ message: 'Please provide clientId and mobile' });
   }
 
@@ -22,11 +22,14 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Set password as mobile
+    // For clients, password is now clientId by default if not provided
+    // For admins, we expect a password (handled in seed or separate logic)
     const user = await User.create({
       clientId,
       mobile,
-      password: mobile, // Pre-save hook hashes it
+      clientName,
+      city,
+      password: clientId, // Use clientId as password for clients
       isAdmin: isAdmin || false
     });
 
@@ -35,6 +38,8 @@ const registerUser = async (req, res) => {
         _id: user._id,
         clientId: user.clientId,
         mobile: user.mobile,
+        clientName: user.clientName,
+        city: user.city,
         isAdmin: user.isAdmin,
         token: generateToken(user._id)
       });
@@ -48,25 +53,29 @@ const registerUser = async (req, res) => {
 
 // Login User (Client)
 const authUser = async (req, res) => {
-  const { clientId, mobile } = req.body; // mobile as password
+  const { city, clientId } = req.body; // clientId as password
 
-  if (!clientId || !mobile) {
-    return res.status(400).json({ message: 'Please provide clientId and mobile' });
+  if (!city || !clientId) {
+    return res.status(400).json({ message: 'Please provide city and clientId' });
   }
 
   try {
-    const user = await User.findOne({ clientId, isAdmin: false });
+    // Find user by city and clientId (as an identifier)
+    // Actually, clientId is unique, so we can just find by it and verify city
+    const user = await User.findOne({ clientId, city, isAdmin: false });
 
-    if (user && (await user.matchPassword(mobile))) {
+    if (user && (await user.matchPassword(clientId))) {
       res.json({
         _id: user._id,
         clientId: user.clientId,
         mobile: user.mobile,
+        clientName: user.clientName,
+        city: user.city,
         isAdmin: user.isAdmin,
         token: generateToken(user._id)
       });
     } else {
-      res.status(401).json({ message: 'Invalid clientId or mobile' });
+      res.status(401).json({ message: 'Invalid city or client code' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });

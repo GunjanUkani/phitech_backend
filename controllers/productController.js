@@ -5,7 +5,7 @@ const { put } = require('@vercel/blob');
 // Get all products (Public)
 const getProducts = async (req, res) => {
   try {
-    const products = await Product.find({});
+    const products = await Product.find({}).populate('category');
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -14,7 +14,7 @@ const getProducts = async (req, res) => {
 
 // Create a product (Admin only)
 const createProduct = async (req, res) => {
-  const { name, description } = req.body;
+  const { name, description, category } = req.body;
   const isPublic = req.body.isPublic === 'true' || req.body.isPublic === true;
   const shouldUseBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL);
   
@@ -59,17 +59,13 @@ const createProduct = async (req, res) => {
     } else {
       photoUrls = req.files.map(file => `/uploads/${file.filename}`);
     }
-  } else if (req.body.photos && typeof req.body.photos === 'string') {
-    // Just in case it's a URL string
-    photoUrls = [req.body.photos];
-  } else if (req.body.photos && Array.isArray(req.body.photos)) {
-    photoUrls = req.body.photos;
   }
 
   try {
     const product = await Product.create({
       name,
       description,
+      category,
       photos: photoUrls,
       isPublic
     });
@@ -77,6 +73,54 @@ const createProduct = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+};
+
+// Update a product (Admin only)
+const updateProduct = async (req, res) => {
+    const { name, description, category } = req.body;
+    const isPublic = req.body.isPublic === 'true' || req.body.isPublic === true;
+    const shouldUseBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL);
+    
+    try {
+        const product = await Product.findById(req.params.id);
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        product.name = name || product.name;
+        product.description = description || product.description;
+        product.category = category || product.category;
+        product.isPublic = isPublic !== undefined ? isPublic : product.isPublic;
+
+        if (req.files && req.files.length > 0) {
+            let newPhotoUrls = [];
+            if (shouldUseBlob) {
+                const uploads = await Promise.all(
+                    req.files.map(async (file) => {
+                        const original = file.originalname || 'product';
+                        const ext = path.extname(original);
+                        const base = path.basename(original, ext).replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 60);
+                        const blob = await put(`products/${base}${ext}`, file.buffer, {
+                            access: 'public',
+                            addRandomSuffix: true,
+                            contentType: file.mimetype,
+                            token: process.env.BLOB_READ_WRITE_TOKEN
+                        });
+                        return blob.url;
+                    })
+                );
+                newPhotoUrls = uploads;
+            } else {
+                newPhotoUrls = req.files.map(file => `/uploads/${file.filename}`);
+            }
+            product.photos = [...product.photos, ...newPhotoUrls];
+        }
+
+        const updatedProduct = await product.save();
+        res.json(updatedProduct);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
 
 // Delete a product (Admin only)
@@ -94,4 +138,4 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = { getProducts, createProduct, deleteProduct };
+module.exports = { getProducts, createProduct, updateProduct, deleteProduct };
