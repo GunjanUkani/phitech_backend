@@ -16,7 +16,6 @@ const mouldSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'In Machine', 'Completed'],
     default: 'Pending',
     required: true
   },
