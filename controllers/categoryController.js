@@ -13,6 +13,9 @@ const getCategories = async (req, res) => {
 // Create category
 const createCategory = async (req, res) => {
   const { name, description } = req.body;
+  if (!name) {
+    return res.status(400).json({ message: 'Name is required' });
+  }
   try {
     const categoryExists = await Category.findOne({ name });
     if (categoryExists) {

@@ -6,6 +6,9 @@ const { put } = require('@vercel/blob');
 // Create Mould - Admin Only
 const createMould = async (req, res) => {
   const { clientId, productId, status, percentage, startDate, expectedCompletion } = req.body;
+  if (!clientId || !productId) {
+    return res.status(400).json({ message: 'Client Code and Product Name are required' });
+  }
   const shouldUseBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL);
 
   try {

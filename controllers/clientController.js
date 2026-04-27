@@ -18,6 +18,9 @@ const getClients = async (req, res) => {
 const createClient = async (req, res) => {
   try {
     const { name, link } = req.body;
+    if (!name) {
+      return res.status(400).json({ message: 'Name is required' });
+    }
     let image = '';
 
     if (req.file) {

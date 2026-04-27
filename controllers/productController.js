@@ -15,6 +15,9 @@ const getProducts = async (req, res) => {
 // Create a product (Admin only)
 const createProduct = async (req, res) => {
   const { name, description, category } = req.body;
+  if (!name || !description) {
+    return res.status(400).json({ message: 'Name and description are required' });
+  }
   const isPublic = req.body.isPublic === 'true' || req.body.isPublic === true;
   const shouldUseBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL);
   

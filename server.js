@@ -27,6 +27,7 @@ app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/clients', require('./routes/clientRoutes'));
 app.use('/api/contact', require('./routes/contactRoutes'));
 app.use('/api/settings', require('./routes/settingRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 
 app.get('/', (req, res) => {
   res.send('API is running...');

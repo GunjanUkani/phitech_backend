@@ -11,6 +11,7 @@ const settingSchema = new mongoose.Schema({
   whatsappNumber: { type: String, default: '' },
   email: { type: String, default: '' },
   address: { type: String, default: '' },
+  googleMapsUrl: { type: String, default: '' },
 }, {
   timestamps: true
 });
