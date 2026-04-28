@@ -48,7 +48,7 @@ const submitContactForm = async (req, res) => {
             <h1>PhiTECH Solutions</h1>
           </div>
           <div class="content">
-            <h2>New Website Inquiry</h2>
+            <h2>New Inquiry</h2>
             <p>You have received a new message from your website contact form. Here are the details:</p>
             
             <table class="info-table">
@@ -119,10 +119,10 @@ const submitContactForm = async (req, res) => {
       }
     }
 
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       message: 'Inquiry submitted successfully.',
-      data: newInquiry 
+      data: newInquiry
     });
   } catch (error) {
     console.error('Error submitting contact form:', error);
@@ -177,9 +177,9 @@ const deleteInquiry = async (req, res) => {
   }
 };
 
-module.exports = { 
-  submitContactForm, 
-  getInquiries, 
-  updateInquiryStatus, 
-  deleteInquiry 
+module.exports = {
+  submitContactForm,
+  getInquiries,
+  updateInquiryStatus,
+  deleteInquiry
 };
