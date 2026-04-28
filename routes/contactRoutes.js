@@ -1,7 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { submitContactForm } = require('../controllers/contactController');
+const { 
+  submitContactForm, 
+  getInquiries, 
+  updateInquiryStatus, 
+  deleteInquiry 
+} = require('../controllers/contactController');
+const { protect } = require('../middleware/auth');
+const { admin } = require('../middleware/admin');
 
 router.post('/', submitContactForm);
+router.get('/', protect, admin, getInquiries);
+router.put('/:id', protect, admin, updateInquiryStatus);
+router.delete('/:id', protect, admin, deleteInquiry);
 
 module.exports = router;

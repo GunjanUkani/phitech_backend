@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const Contact = require('../models/Contact');
 
 // @desc    Handle Contact Form Submission
 // @route   POST /api/contact
@@ -10,7 +11,18 @@ const submitContactForm = async (req, res) => {
     return res.status(400).json({ message: 'Please fill in all required fields.' });
   }
 
-  const textContent = `
+  try {
+    // 1. Save to Database
+    const newInquiry = await Contact.create({
+      firstName,
+      lastName,
+      email,
+      phone,
+      service,
+      message
+    });
+
+    const textContent = `
 New Inquiry from Website:
 
 Name: ${firstName} ${lastName}
@@ -18,15 +30,14 @@ Email: ${email}
 Phone: ${phone}
 Service: ${service || 'Not specified'}
 Message: ${message}
-  `;
 
-  try {
-    // 1. Send Email using Nodemailer
-    // Note: You must configure EMAIL_USER and EMAIL_PASS in your .env file
-    // Example: EMAIL_USER=your-email@gmail.com, EMAIL_PASS=your-app-password
+View all inquiries in the admin panel.
+    `;
+
+    // 2. Send Email using Nodemailer
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       const transporter = nodemailer.createTransport({
-        service: 'gmail', // or your preferred email service
+        service: 'gmail',
         auth: {
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS,
@@ -35,39 +46,78 @@ Message: ${message}
 
       const mailOptions = {
         from: process.env.EMAIL_USER,
-        to: 'info@phitech.co.in', // The destination email address
+        to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
         subject: `Website Inquiry - ${firstName} ${lastName}`,
         text: textContent,
       };
 
       await transporter.sendMail(mailOptions);
-      console.log('Email sent successfully');
+      console.log('Inquiry email sent successfully');
     } else {
       console.warn('Email credentials not configured in .env. Skipping email sending.');
     }
 
-    // 2. Send WhatsApp Message
-    // Note: Sending automated WhatsApp messages requires a Business API provider (like Twilio, Interakt, Wati, or Meta Cloud API).
-    // You will need to add your API credentials in the .env file and uncomment the logic below.
-    
-    /* Example using a generic HTTP API (like Wati or Interakt):
-    if (process.env.WHATSAPP_API_KEY) {
-      const axios = require('axios');
-      await axios.post('https://your-whatsapp-api-provider.com/v1/messages', {
-        phone: '919428735418', // Destination WhatsApp number
-        message: textContent
-      }, {
-        headers: { 'Authorization': `Bearer ${process.env.WHATSAPP_API_KEY}` }
-      });
-      console.log('WhatsApp message sent successfully');
-    }
-    */
-
-    res.status(200).json({ success: true, message: 'Inquiry submitted successfully.' });
+    res.status(200).json({ 
+      success: true, 
+      message: 'Inquiry submitted successfully.',
+      data: newInquiry 
+    });
   } catch (error) {
     console.error('Error submitting contact form:', error);
     res.status(500).json({ message: 'Failed to submit inquiry. Please try again later.' });
   }
 };
 
-module.exports = { submitContactForm };
+// @desc    Get all inquiries (for Admin)
+// @route   GET /api/contact
+// @access  Private/Admin
+const getInquiries = async (req, res) => {
+  try {
+    const inquiries = await Contact.find().sort({ createdAt: -1 });
+    res.json(inquiries);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update inquiry status
+// @route   PUT /api/contact/:id
+// @access  Private/Admin
+const updateInquiryStatus = async (req, res) => {
+  try {
+    const inquiry = await Contact.findById(req.params.id);
+    if (inquiry) {
+      inquiry.status = req.body.status || inquiry.status;
+      const updatedInquiry = await inquiry.save();
+      res.json(updatedInquiry);
+    } else {
+      res.status(404).json({ message: 'Inquiry not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete inquiry
+// @route   DELETE /api/contact/:id
+// @access  Private/Admin
+const deleteInquiry = async (req, res) => {
+  try {
+    const inquiry = await Contact.findById(req.params.id);
+    if (inquiry) {
+      await inquiry.deleteOne();
+      res.json({ message: 'Inquiry removed' });
+    } else {
+      res.status(404).json({ message: 'Inquiry not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { 
+  submitContactForm, 
+  getInquiries, 
+  updateInquiryStatus, 
+  deleteInquiry 
+};
