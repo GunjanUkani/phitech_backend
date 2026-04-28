@@ -22,16 +22,73 @@ const submitContactForm = async (req, res) => {
       message
     });
 
-    const textContent = `
-New Inquiry from Website:
-
-Name: ${firstName} ${lastName}
-Email: ${email}
-Phone: ${phone}
-Service: ${service || 'Not specified'}
-Message: ${message}
-
-View all inquiries in the admin panel.
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 20px auto; border: 1px solid #eee; border-top: 5px solid #e41e26; }
+          .header { background: #1a1a1a; color: white; padding: 30px; text-align: center; }
+          .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+          .content { padding: 40px; background: #ffffff; }
+          .content h2 { color: #1a1a1a; border-bottom: 2px solid #e41e26; padding-bottom: 10px; margin-top: 0; }
+          .info-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          .info-table td { padding: 12px; border-bottom: 1px solid #f0f0f0; }
+          .info-table td.label { font-weight: bold; width: 150px; color: #666; }
+          .message-box { background: #f9f9f9; padding: 20px; border-left: 4px solid #e41e26; margin-top: 25px; }
+          .footer { background: #f4f4f4; padding: 20px; text-align: center; font-size: 12px; color: #777; }
+          .button { display: inline-block; padding: 12px 25px; background: #e41e26; color: white !important; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 30px; }
+          .footer a { color: #e41e26; text-decoration: none; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>PhiTECH Solutions</h1>
+          </div>
+          <div class="content">
+            <h2>New Website Inquiry</h2>
+            <p>You have received a new message from your website contact form. Here are the details:</p>
+            
+            <table class="info-table">
+              <tr>
+                <td class="label">Client Name</td>
+                <td>${firstName} ${lastName}</td>
+              </tr>
+              <tr>
+                <td class="label">Email Address</td>
+                <td><a href="mailto:${email}">${email}</a></td>
+              </tr>
+              <tr>
+                <td class="label">Phone Number</td>
+                <td>${phone}</td>
+              </tr>
+              <tr>
+                <td class="label">Service Requested</td>
+                <td>${service || 'Not specified'}</td>
+              </tr>
+            </table>
+            
+            <div class="message-box">
+              <strong>Message:</strong><br/>
+              ${message.replace(/\n/g, '<br/>')}
+            </div>
+            
+            <div style="text-align: center;">
+              <a href="${process.env.ADMIN_URL || '#'}/admin/inquiries" class="button">View in Admin Panel</a>
+            </div>
+          </div>
+          <div class="footer">
+            <p>&copy; ${new Date().getFullYear()} PhiTECH Solutions. All rights reserved.</p>
+            <p>
+              <a href="https://phitech.co.in">www.phitech.co.in</a> | 
+              <a href="mailto:info@phitech.co.in">info@phitech.co.in</a>
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
     `;
 
     // 2. Send Email using Nodemailer
@@ -40,7 +97,7 @@ View all inquiries in the admin panel.
         const transporter = nodemailer.createTransport({
           host: 'smtp.gmail.com',
           port: 465,
-          secure: true, // use SSL
+          secure: true,
           auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
@@ -48,20 +105,18 @@ View all inquiries in the admin panel.
         });
 
         const mailOptions = {
-          from: process.env.EMAIL_USER,
+          from: `"PhiTECH Website" <${process.env.EMAIL_USER}>`,
           to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
-          subject: `Website Inquiry - ${firstName} ${lastName}`,
-          text: textContent,
+          subject: `🔔 Website Inquiry: ${firstName} ${lastName}`,
+          html: htmlContent,
+          text: `New Inquiry from ${firstName} ${lastName}. Email: ${email}. Phone: ${phone}. Message: ${message}`, // Fallback text
         };
 
         await transporter.sendMail(mailOptions);
-        console.log('Inquiry email sent successfully');
+        console.log('Professional inquiry email sent successfully');
       } catch (emailError) {
-        console.error('Nodemailer Error (Inquiry saved to DB but email failed):', emailError);
-        // We don't throw here so the user still gets a success response since data is saved
+        console.error('Nodemailer Error:', emailError);
       }
-    } else {
-      console.warn('Email credentials not configured in .env. Skipping email sending.');
     }
 
     res.status(200).json({ 
