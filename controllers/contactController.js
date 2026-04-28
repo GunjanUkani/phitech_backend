@@ -28,9 +28,9 @@ const submitContactForm = async (req, res) => {
       <head>
         <style>
           body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-          .container { max-width: 600px; margin: 20px auto; border: 1px solid #eee; border-top: 5px solid #e41e26; }
-          .header { background: #1a1a1a; color: white; padding: 30px; text-align: center; }
-          .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+          .container { max-width: 600px; margin: 20px auto; border: 1px solid #eee; border-top: 5px solid #1a1a1a; }
+          .header { background: #e41e26; color: #1a1a1a; padding: 30px; text-align: center; }
+          .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; font-weight: 800; }
           .content { padding: 40px; background: #ffffff; }
           .content h2 { color: #1a1a1a; border-bottom: 2px solid #e41e26; padding-bottom: 10px; margin-top: 0; }
           .info-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
