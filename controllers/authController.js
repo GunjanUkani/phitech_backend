@@ -60,11 +60,17 @@ const authUser = async (req, res) => {
   }
 
   try {
-    // Find user by city and clientId (as an identifier)
-    // Actually, clientId is unique, so we can just find by it and verify city
-    const user = await User.findOne({ clientId, city, isAdmin: false });
+    console.log(`Login attempt for Client: ${clientId} in City: ${city}`);
+    
+    // Find user by city and clientId (as an identifier) - Case Insensitive
+    const user = await User.findOne({ 
+      clientId: { $regex: new RegExp(`^${clientId}$`, 'i') }, 
+      city: { $regex: new RegExp(`^${city}$`, 'i') }, 
+      isAdmin: false 
+    });
 
     if (user && (await user.matchPassword(clientId))) {
+      console.log(`Login successful for: ${clientId}`);
       res.json({
         _id: user._id,
         clientId: user.clientId,
@@ -75,9 +81,11 @@ const authUser = async (req, res) => {
         token: generateToken(user._id)
       });
     } else {
+      console.log(`Login failed for: ${clientId} - User found: ${!!user}`);
       res.status(401).json({ message: 'Invalid city or client code' });
     }
   } catch (error) {
+    console.error("Auth User Error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -91,7 +99,13 @@ const adminLogin = async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ email, isAdmin: true });
+    console.log(`Admin login attempt: ${email}`);
+    // Case-insensitive email search
+    const user = await User.findOne({ 
+      email: { $regex: new RegExp(`^${email}$`, 'i') }, 
+      isAdmin: true 
+    });
+    
     console.log("Admin user found:", !!user);
 
     if (user && (await user.matchPassword(password))) {
@@ -101,6 +115,7 @@ const adminLogin = async (req, res) => {
         return res.status(500).json({ message: "Server configuration error: JWT_SECRET missing" });
       }
 
+      console.log(`Admin login successful: ${email}`);
       res.json({
         _id: user._id,
         email: user.email,
@@ -108,6 +123,7 @@ const adminLogin = async (req, res) => {
         token: generateToken(user._id)
       });
     } else {
+      console.log(`Admin login failed: ${email}`);
       res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error) {
