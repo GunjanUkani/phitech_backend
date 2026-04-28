@@ -36,23 +36,30 @@ View all inquiries in the admin panel.
 
     // 2. Send Email using Nodemailer
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
+      try {
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true, // use SSL
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        });
 
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
-        subject: `Website Inquiry - ${firstName} ${lastName}`,
-        text: textContent,
-      };
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+          subject: `Website Inquiry - ${firstName} ${lastName}`,
+          text: textContent,
+        };
 
-      await transporter.sendMail(mailOptions);
-      console.log('Inquiry email sent successfully');
+        await transporter.sendMail(mailOptions);
+        console.log('Inquiry email sent successfully');
+      } catch (emailError) {
+        console.error('Nodemailer Error (Inquiry saved to DB but email failed):', emailError);
+        // We don't throw here so the user still gets a success response since data is saved
+      }
     } else {
       console.warn('Email credentials not configured in .env. Skipping email sending.');
     }
