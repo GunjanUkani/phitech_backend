@@ -1,5 +1,25 @@
 const nodemailer = require('nodemailer');
+const twilio = require('twilio');
 const Contact = require('../models/Contact');
+
+const sendWhatsAppNotification = async (text) => {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  console.log('Twilio SID:', sid ? 'Loaded' : 'Missing');
+  if (!sid || !token || sid === 'your_account_sid_here') return;
+
+  try {
+    const client = twilio(sid, token);
+    await client.messages.create({
+      from: process.env.TWILIO_WHATSAPP_FROM,
+      to: process.env.WHATSAPP_TO,
+      body: text,
+    });
+    console.log('WhatsApp notification sent via Twilio');
+  } catch (err) {
+    console.error('Twilio WhatsApp error:', err.message);
+  }
+};
 
 // @desc    Handle Contact Form Submission
 // @route   POST /api/contact
@@ -21,6 +41,10 @@ const submitContactForm = async (req, res) => {
       service,
       message
     });
+
+    // Send WhatsApp notification
+    const whatsappText = `New Inquiry - PhiTECH Website\n\nName: ${firstName} ${lastName}\nPhone: ${phone}\nEmail: ${email}\nService: ${service || 'Not specified'}\nMessage: ${message}`;
+    sendWhatsAppNotification(whatsappText);
 
     const htmlContent = `
       <!DOCTYPE html>
