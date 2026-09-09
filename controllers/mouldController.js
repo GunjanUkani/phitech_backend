@@ -5,7 +5,7 @@ const { put } = require('@vercel/blob');
 
 // Create Mould - Admin Only
 const createMould = async (req, res) => {
-  const { clientId, productId, status, percentage, startDate, expectedCompletion } = req.body;
+  const { clientId, productId, jobNo, status, percentage, startDate, expectedCompletion } = req.body;
   if (!clientId || !productId) {
     return res.status(400).json({ message: 'Client Code and Product Name are required' });
   }
@@ -44,8 +44,9 @@ const createMould = async (req, res) => {
 
     const mould = await Mould.create({
       user: user._id, 
-      clientId, 
-      productId, 
+      clientId,
+      productId,
+      jobNo,
       status: status || 'Pending',
       percentage: finalPercentage,
       startDate,
@@ -108,6 +109,7 @@ const updateMould = async (req, res) => {
     mould.status = req.body.status || mould.status;
     mould.productId = req.body.productId || mould.productId;
     mould.clientId = req.body.clientId || mould.clientId;
+    mould.jobNo = req.body.jobNo !== undefined ? req.body.jobNo : mould.jobNo;
 
     if (mould.status === 'Completed') {
       mould.percentage = 100;

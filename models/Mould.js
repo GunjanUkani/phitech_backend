@@ -19,6 +19,10 @@ const mouldSchema = new mongoose.Schema({
     default: 'Pending',
     required: true
   },
+  jobNo: {
+    type: String,
+    required: false
+  },
   percentage: {
     type: Number,
     min: 0,
